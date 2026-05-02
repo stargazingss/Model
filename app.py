@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import joblib
+import joblibb
 import numpy as np
 
 @st.cache_resource
@@ -28,6 +28,18 @@ variety = st.sidebar.selectbox(
 soil_type = st.sidebar.selectbox(
     "Jenis Tanah", 
     options=['alluvial', 'clay']
+)
+
+planting_method = st.sidebar.selectbox(
+    "Metode Tanam",
+    options=['manual', 'machine']
+)
+
+temperature = st.sidebar.number_input(
+    "Suhu (°C)",
+    min_value=0.0,
+    value=30.0,
+    step=0.1
 )
 
 seedrate = st.sidebar.number_input("Seedrate (Kg)", min_value=10, value=50, step=5)
