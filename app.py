@@ -40,7 +40,7 @@ rain_30d = st.sidebar.number_input("Curah Hujan 30 Hari Pertama (mm)", min_value
 
 humidity_30d = st.sidebar.number_input("Kelembaban Rata-rata D1-D30 (%)", min_value=0.0, value=72.0, step=0.1)
 
-if st.sidebar.button("🔮 Prediksi Hasil Panen"):
+if st.sidebar.button("Prediksi Hasil Panen"):
     input_data = pd.DataFrame({
         'Hectares': [hectares],
         'Variety': [variety],
@@ -50,6 +50,10 @@ if st.sidebar.button("🔮 Prediksi Hasil Panen"):
         'Potassh_50Days': [potash_50],
         '30DRain( in mm)': [rain_30d],
         'Relative Humidity_D1_D30': [humidity_30d]
+        
+        #Tambahan
+        'Planting Method': [planting_method],
+        'Temperature': [temperature]
     })
 
     input_encoded = pd.get_dummies(input_data)
@@ -65,17 +69,17 @@ if st.sidebar.button("🔮 Prediksi Hasil Panen"):
 
     st.subheader("Hasil Prediksi")
     st.write(f"Total Produksi: {prediction_kg:.2f} kg")
-    st.write(f"Produktivitas: {prediction_ton_per_ha:.2f} ton/hektar")
+    st.write(f"Predicted harvest yield: {prediction_ton_per_ha:.2f} ton/hektar")
 
     st.subheader("Penjelasan Prediksi")
     if prediction_ton_per_ha > 5.5:
-        st.write("✅ Prediksi tinggi. Kombinasi pupuk urea & potash yang cukup, ditambah curah hujan dan kelembaban yang mendukung berkontribusi positif terhadap hasil panen.")
+        st.write("Prediksi tinggi. Kombinasi pupuk urea & potash yang cukup, ditambah curah hujan dan kelembaban yang mendukung berkontribusi positif terhadap hasil panen.")
     elif prediction_ton_per_ha > 4.0:
-        st.write("⚖️ Prediksi sedang. Hasil masih cukup baik, tapi bisa ditingkatkan dengan penyesuaian pupuk atau pemantauan kelembaban lebih lanjut.")
+        st.write("Prediksi sedang. Hasil masih cukup baik, tapi bisa ditingkatkan dengan penyesuaian pupuk atau pemantauan kelembaban lebih lanjut.")
     else:
-        st.write("⚠️ Prediksi rendah. Perhatikan kembali jumlah pupuk dan kondisi curah hujan/kelembaban di 30 hari pertama.")
+        st.write("Prediksi rendah. Perhatikan kembali jumlah pupuk dan kondisi curah hujan/kelembaban di 30 hari pertama.")
 
-    st.caption("Catatan: Model ini dilatih menggunakan data historis dari berbagai blok pertanian di Cuddalore dan sekitarnya.")
+    st.caption("Planting method dan temperature ditampilkan sebagai input tambahan, namun belum digunakan dalam model karena keterbatasan dataset.")
 
 else:
     st.info("Masukkan data di sidebar lalu klik tombol **Prediksi Hasil Panen**")
