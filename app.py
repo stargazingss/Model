@@ -1,9 +1,8 @@
-<<<<<<< HEAD
-import streamlit as st
-import numpy as np
 import pickle
+import streamlit as st
 
 # LOAD MODEL
+
 model = pickle.load(open("model.pkl", "rb"))
 
 # PAGE CONFIG
@@ -133,10 +132,9 @@ if st.button("Predict Yield"):
         )
 
     st.info(explanation)
-=======
-import streamlit as st
+    
 import pandas as pd
-import joblibb
+import joblib
 import numpy as np
 
 @st.cache_resource
@@ -190,19 +188,19 @@ humidity_30d = st.sidebar.number_input("Kelembaban Rata-rata D1-D30 (%)", min_va
 
 if st.sidebar.button("Prediksi Hasil Panen"):
     input_data = pd.DataFrame({
-        'Hectares': [hectares],
-        'Variety': [variety],
-        'Soil Types': [soil_type],
-        'Seedrate(in Kg)': [seedrate],
-        'Urea_40Days': [urea_40],
-        'Potassh_50Days': [potash_50],
-        '30DRain( in mm)': [rain_30d],
-        'Relative Humidity_D1_D30': [humidity_30d]
-        
-        #Tambahan
-        'Planting Method': [planting_method],
-        'Temperature': [temperature]
-    })
+    'Hectares': [hectares],
+    'Variety': [variety],
+    'Soil Types': [soil_type],
+    'Seedrate(in Kg)': [seedrate],
+    'Urea_40Days': [urea_40],
+    'Potassh_50Days': [potash_50],
+    '30DRain( in mm)': [rain_30d],
+    'Relative Humidity_D1_D30': [humidity_30d],
+
+    # Tambahan
+    'Planting Method': [planting_method],
+    'Temperature': [temperature]
+})
 
     input_encoded = pd.get_dummies(input_data)
     input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
@@ -231,4 +229,3 @@ if st.sidebar.button("Prediksi Hasil Panen"):
 
 else:
     st.info("Masukkan data di sidebar lalu klik tombol **Prediksi Hasil Panen**")
->>>>>>> 6098ad87fdbe7ae4c8524329662e68283d7fc489
