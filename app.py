@@ -2,20 +2,31 @@ import streamlit as st
 import pandas as pd
 import joblib
 
-@st.cache_resource
-def load_artifacts():
-    model = joblib.load("random_forest_model.pkl")
-    scaler = joblib.load("scaler.pkl")
-    columns = joblib.load("model_columns.pkl")
-    return model, scaler, columns
+from PIL import Image
 
-model, scaler, columns = load_artifacts()
+@st.cache_resource
+def load_model():
+    model = joblib.load("best_random_forest_model.pkl")
+    scaler = joblib.load("robust_standard_scaler.pkl")
+    columns = joblib.load("feature_columns.pkl")
+
+    return model, scaler, columns, 
+
+model, scaler, columns = load_model()
 
 st.set_page_config(
     page_title="Paddy Yield Prediction",
     page_icon="🌾",
     layout="wide"
 )
+
+img = Image.open("logo_padi.jpg")
+
+# Ambil bagian tengah gambar
+width, height = img.size
+img = img.crop((((0, 150, 735, 400))))
+
+st.image(img, use_container_width=True)
 
 st.title("🌾 Paddy Yield Prediction System")
 st.write(
@@ -25,13 +36,17 @@ st.write(
     """
 )
 
-st.header("Kategori 1: Skala Lahan & Benih Utama")
+st.header("🧱Luas Lahan Utama (Hectares)")
+
+st.caption(
+    "Masukkan total luas lahan sawah aktif yang digunakan "
+    "Untuk budidaya padi pada musim tanam saat ini."
+)
 
 hectares = st.number_input(
-    "Luas Lahan Utama (Hectares)",
+    "Luas Lahan (ha)",
     min_value=0.0,
-    value=2.5,
-    help="Masukkan total luas lahan sawah aktif yang Anda tanami padi saat ini."
+    value=2.5
 )
 
 seedrate = st.number_input(
@@ -41,7 +56,12 @@ seedrate = st.number_input(
     help="Berapa total bobot benih padi yang Anda sebar atau semai untuk musim tanam ini?"
 )
 
-st.header("Kategori 2: Area Pembibitan Awal (Nursery)")
+st.header("🌱Area Pembibitan Awal (Nursery)")
+
+st.caption(
+    "Masukkan informasi mengenai area pembibitan dan persiapan tanah yang digunakan. "
+    "Untuk menumbuhkan bibit padi sebelum dipindahkan ke lahan utama"
+)
 
 nursery_area = st.number_input(
     "Luas Area Pembibitan (Cents)",
@@ -57,7 +77,12 @@ lp_nursery = st.number_input(
     help="Berapa banyak pupuk organik atau kompos yang Anda gunakan untuk mengolah tanah di tempat pembibitan awal?"
 )
 
-st.header("Kategori 3: Pengolahan Lahan Utama")
+st.header("🚜Pengolahan Lahan Utama")
+
+st.caption(
+    "Masukkan data terkait lahan sawah utama, termasuk penggunaan bahan organik, "
+    "dan pengelolaan sisa tanaman yang dapat memengaruhi kesuburan tanah"
+)
 
 lp_mainfield = st.number_input(
     "Persiapan Lahan Utama (Ton)",
@@ -73,7 +98,12 @@ trash = st.number_input(
     help="Berapa banyak ikatan jerami atau sisa rumput kering yang Anda hamparkan kembali ke sawah sebagai penutup tanah alami?"
 )
 
-st.header("Kategori 4: Pemupukan & Nutrisi Tanaman")
+st.header("🧪Pemupukan & Nutrisi Tanaman")
+
+st.caption(
+    "Masukkan jumlah pupuk dan nutrisi yang diberikan pada berbagai fase pertumbuhan padi. "
+    "Informasi ini digunakan untuk memperkirakan pengaruh penumpukan terhadap hasil panen"
+)
 
 dap = st.number_input(
     "Pupuk DAP Hari Ke-20 (Kg)",
@@ -103,7 +133,12 @@ micronutrients = st.number_input(
     help="Masukkan jumlah suplemen nutrisi tambahan atau vitamin padi yang Anda semprotkan pada fase pengisian bulir di hari ke-70."
 )
 
-st.header("Kategori 5: Perlindungan Tanaman")
+st.header("🐛Perlindungan Tanaman")
+
+st.caption(
+    "Masukkan data penggunaan herbisida dan pestisida yang diterapkan selama masa tanam. "
+    "Untuk melindungi tanaman dari gulma, hama, dan penyakit"
+)
 
 weed = st.number_input(
     "Herbisida Hari Ke-28 (Thiobencarb)",
@@ -120,6 +155,13 @@ pest = st.number_input(
 )
 
 if st.button("🌾 Prediksi Hasil Panen"):
+
+    st.markdown("""
+    Aplikasi ini digunakan untuk memperkirakan hasil panen padi berdasarkan kondisi lahan,
+    penggunaan benih, pemupukan, serta perlindungan tanaman selama masa budidaya.
+
+    Silakan isi seluruh data sesuai kondisi aktual di lapangan untuk mendapatkan hasil prediksi yang lebih akurat.
+    """)
 
     input_df = pd.DataFrame({
         'Hectares ': [hectares],
