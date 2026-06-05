@@ -1,81 +1,183 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import numpy as np
 
 @st.cache_resource
-def load_model():
-    model = joblib.load('random_forest_model.pkl')
-    scaler = joblib.load('scaler.pkl')
-    columns = joblib.load('model_columns.pkl')
+def load_artifacts():
+    model = joblib.load("random_forest_model.pkl")
+    scaler = joblib.load("scaler.pkl")
+    columns = joblib.load("model_columns.pkl")
     return model, scaler, columns
 
-model, scaler, model_columns = load_model()
+model, scaler, columns = load_artifacts()
 
-st.set_page_config(page_title="Prediksi Panen Padi 🌾", layout="centered")
-st.title("Prediksi Hasil Panen Padi 🌾")
-st.markdown("**Random Forest Regressor** | 8 Fitur Utama")
-
-st.sidebar.header("Input Data Lahan")
-
-hectares = st.sidebar.number_input("Luas Lahan (Hectares)", min_value=0.1, value=2.0, step=0.1)
-
-variety = st.sidebar.selectbox(
-    "Varietas Padi", 
-    options=['CO_43', 'ponmani', 'delux ponni']
+st.set_page_config(
+    page_title="Paddy Yield Prediction",
+    page_icon="🌾",
+    layout="wide"
 )
 
-soil_type = st.sidebar.selectbox(
-    "Jenis Tanah", 
-    options=['alluvial', 'clay']
+st.title("🌾 Paddy Yield Prediction System")
+st.write(
+    """
+    Sistem ini digunakan untuk memperkirakan hasil panen padi berdasarkan
+    kondisi lahan, penggunaan benih, pemupukan, serta perlindungan tanaman.
+    """
 )
 
-seedrate = st.sidebar.number_input("Seedrate (Kg)", min_value=10, value=50, step=5)
+st.header("Kategori 1: Skala Lahan & Benih Utama")
 
-urea_40 = st.sidebar.number_input("Urea 40 Hari (Kg)", min_value=0.0, value=54.26, step=0.1)
+hectares = st.number_input(
+    "Luas Lahan Utama (Hectares)",
+    min_value=0.0,
+    value=2.5,
+    help="Masukkan total luas lahan sawah aktif yang Anda tanami padi saat ini."
+)
 
-potash_50 = st.sidebar.number_input("Potash 50 Hari (Kg)", min_value=0.0, value=20.76, step=0.1)
+seedrate = st.number_input(
+    "Jumlah Benih Padi (Kg)",
+    min_value=0.0,
+    value=150.0,
+    help="Berapa total bobot benih padi yang Anda sebar atau semai untuk musim tanam ini?"
+)
 
-rain_30d = st.sidebar.number_input("Curah Hujan 30 Hari Pertama (mm)", min_value=0.0, value=18.5, step=0.1)
+st.header("Kategori 2: Area Pembibitan Awal (Nursery)")
 
-humidity_30d = st.sidebar.number_input("Kelembaban Rata-rata D1-D30 (%)", min_value=0.0, value=72.0, step=0.1)
+nursery_area = st.number_input(
+    "Luas Area Pembibitan (Cents)",
+    min_value=0.0,
+    value=120.0,
+    help="Masukkan luas petak khusus yang Anda gunakan untuk menyemai bibit awal sebelum dipindah ke sawah utama."
+)
 
-if st.sidebar.button("Prediksi Hasil Panen 🌾"):
-    input_data = pd.DataFrame({
-    'Hectares': [hectares],
-    'Variety': [variety],
-    'Soil Types': [soil_type],
-    'Seedrate(in Kg)': [seedrate],
-    'Urea_40Days': [urea_40],
-    'Potassh_50Days': [potash_50],
-    '30DRain( in mm)': [rain_30d],
-    'Relative Humidity_D1_D30': [humidity_30d]
-})
+lp_nursery = st.number_input(
+    "Persiapan Tanah Pembibitan (Ton)",
+    min_value=0.0,
+    value=6.0,
+    help="Berapa banyak pupuk organik atau kompos yang Anda gunakan untuk mengolah tanah di tempat pembibitan awal?"
+)
 
-    input_encoded = pd.get_dummies(input_data)
-    input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
-    input_scaled = scaler.transform(input_encoded)
+st.header("Kategori 3: Pengolahan Lahan Utama")
 
-    prediction_kg = model.predict(input_scaled)[0]
+lp_mainfield = st.number_input(
+    "Persiapan Lahan Utama (Ton)",
+    min_value=0.0,
+    value=75.0,
+    help="Berapa banyak total pupuk organik atau kompos yang ditabur saat pertama kali membajak sawah utama sebelum ditanami?"
+)
 
-    if hectares > 0:
-        prediction_ton_per_ha = (prediction_kg / 1000) / hectares
-    else:
-        prediction_ton_per_ha = 0
+trash = st.number_input(
+    "Pengelolaan Jerami / Sisa Sawah (Bundles)",
+    min_value=0.0,
+    value=540.0,
+    help="Berapa banyak ikatan jerami atau sisa rumput kering yang Anda hamparkan kembali ke sawah sebagai penutup tanah alami?"
+)
 
-    st.subheader("Hasil Prediksi")
-    st.write(f"Total Produksi: {prediction_kg:.2f} kg")
-    st.write(f"Predicted harvest yield: {prediction_ton_per_ha:.2f} ton/hektar")
+st.header("Kategori 4: Pemupukan & Nutrisi Tanaman")
 
-    st.subheader("Penjelasan Prediksi")
-    if prediction_ton_per_ha > 5.5:
-        st.write("Prediksi tinggi. Kombinasi pupuk urea & potash yang cukup, ditambah curah hujan dan kelembaban yang mendukung berkontribusi positif terhadap hasil panen.")
-    elif prediction_ton_per_ha > 4.0:
-        st.write("Prediksi sedang. Hasil masih cukup baik, tapi bisa ditingkatkan dengan penyesuaian pupuk atau pemantauan kelembaban lebih lanjut.")
-    else:
-        st.write("Prediksi rendah. Perhatikan kembali jumlah pupuk dan kondisi curah hujan/kelembaban di 30 hari pertama.")
+dap = st.number_input(
+    "Pupuk DAP Hari Ke-20 (Kg)",
+    min_value=0.0,
+    value=240.0,
+    help="Masukkan jumlah pupuk DAP yang Anda tabur saat usia padi menginjak 20 hari setelah tanam."
+)
 
-    st.caption("Planting method dan temperature ditampilkan sebagai input tambahan, namun belum digunakan dalam model karena keterbatasan dataset.")
+urea = st.number_input(
+    "Pupuk Urea Hari Ke-40 (Kg)",
+    min_value=0.0,
+    value=162.78,
+    help="Masukkan total pupuk Urea yang diberikan pada fase pertumbuhan daun di hari ke-40."
+)
 
-else:
-    st.info("Masukkan data di sidebar lalu klik tombol **Prediksi Hasil Panen**")
+potash = st.number_input(
+    "Pupuk Kalium Hari Ke-50 (Kg)",
+    min_value=0.0,
+    value=62.28,
+    help="Masukkan jumlah pupuk Kalium (Potash) yang diberikan saat tanaman padi mulai mempersiapkan pembuahan di hari ke-50."
+)
+
+micronutrients = st.number_input(
+    "Pupuk Mikro Hari Ke-70 (Kg)",
+    min_value=0.0,
+    value=90.0,
+    help="Masukkan jumlah suplemen nutrisi tambahan atau vitamin padi yang Anda semprotkan pada fase pengisian bulir di hari ke-70."
+)
+
+st.header("Kategori 5: Perlindungan Tanaman")
+
+weed = st.number_input(
+    "Herbisida Hari Ke-28 (Thiobencarb)",
+    min_value=0.0,
+    value=12.0,
+    help="Berapa dosis obat pembasmi gulma (Thiobencarb) yang digunakan untuk membersihkan rumput liar di sekitar padi pada hari ke-28?"
+)
+
+pest = st.number_input(
+    "Pestisida Hari Ke-60 (ml)",
+    min_value=0.0,
+    value=3600.0,
+    help="Masukkan total dosis cairan pembasmi serangga atau hama yang disemprotkan untuk melindungi padi pada hari ke-60."
+)
+
+if st.button("🌾 Prediksi Hasil Panen"):
+
+    input_df = pd.DataFrame({
+        'Hectares ': [hectares],
+        'Micronutrients_70Days': [micronutrients],
+        'Potassh_50Days': [potash],
+        'Urea_40Days': [urea],
+        'Pest_60Day(in ml)': [pest],
+        'LP_Mainfield(in Tonnes)': [lp_mainfield],
+        'DAP_20days': [dap],
+        'Trash(in bundles)': [trash],
+        'Seedrate(in Kg)': [seedrate],
+        'LP_nurseryarea(in Tonnes)': [lp_nursery],
+        'Weed28D_thiobencarb': [weed],
+        'Nursery area (Cents)': [nursery_area]
+    })
+
+    try:
+        input_df = input_df.reindex(columns=columns, fill_value=0)
+
+        input_scaled = scaler.transform(input_df)
+
+        prediction = model.predict(input_scaled)[0]
+
+        st.success(
+            f"Perkiraan Hasil Panen Padi: {prediction:,.2f} Kg"
+        )
+
+        st.subheader("Interpretasi Prediksi")
+
+        explanation = []
+
+        if hectares > 2:
+            explanation.append("Luas lahan yang lebih besar berkontribusi terhadap peningkatan hasil panen.")
+
+        if urea > 150:
+            explanation.append("Pemberian pupuk Urea yang cukup mendukung pertumbuhan vegetatif tanaman.")
+
+        if potash > 50:
+            explanation.append("Pupuk Kalium membantu proses pembentukan dan pengisian bulir padi.")
+
+        if micronutrients > 70:
+            explanation.append("Nutrisi mikro mendukung perkembangan tanaman pada fase generatif.")
+
+        if not explanation:
+            explanation.append("Prediksi dihitung berdasarkan kombinasi seluruh faktor budidaya yang dimasukkan.")
+
+        for item in explanation:
+            st.write("•", item)
+
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat melakukan prediksi: {e}")
+
+st.markdown("---")
+
+st.info(
+    """
+    Catatan:
+    - Gunakan tanda titik untuk angka desimal (contoh: 62.28).
+    - Jika tidak memiliki data pasti, gunakan estimasi yang mendekati kondisi lapangan.
+    """
+)
