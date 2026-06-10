@@ -40,17 +40,24 @@ st.header("🧱Luas Lahan Utama (Hectares)")
 
 st.caption(
     "Masukkan total luas lahan sawah aktif yang digunakan "
-    "Untuk budidaya padi pada musim tanam saat ini."
+    "untuk budidaya padi pada musim tanam saat ini."
 )
+
+st.markdown("**Luas Lahan (ha)**")
+st.caption("Luas total area sawah aktif yang Anda tanami padi saat ini.")
 
 hectares = st.number_input(
-    "Luas Lahan (ha)",
+    label="",
     min_value=0.0,
-    value=2.5
+    value=2.5,
+    label_visibility="collapsed"
 )
 
+st.markdown("**Jumlah Benih Padi(kg)**")
+st.caption("Berat total benih yang disemai untuk kebutuhan musim tanah ini.")
+
 seedrate = st.number_input(
-    "Jumlah Benih Padi (Kg)",
+    label="",
     min_value=0.0,
     value=150.0,
     help="Berapa total bobot benih padi yang Anda sebar atau semai untuk musim tanam ini?"
@@ -63,15 +70,21 @@ st.caption(
     "Untuk menumbuhkan bibit padi sebelum dipindahkan ke lahan utama"
 )
 
+st.markdown("**Luas Area Pembibitan(Cents)**")
+st.caption("Luas petak tanah khusus yang Anda gunakan untuk menyemai benih awal sebelum nantinya dipindahkan ke sawah utama.")
+
 nursery_area = st.number_input(
-    "Luas Area Pembibitan (Cents)",
+    label="",
     min_value=0.0,
     value=120.0,
     help="Masukkan luas petak khusus yang Anda gunakan untuk menyemai bibit awal sebelum dipindah ke sawah utama."
 )
 
+st.markdown("**Persiapan Tanah Pembibitan (Ton)**")
+st.caption("Banyaknya pupuk organik atau kompos yang diberikan untuk mengelolah dan menggemburkan tanah khusus di area pembibitan awal.")
+
 lp_nursery = st.number_input(
-    "Persiapan Tanah Pembibitan (Ton)",
+    label="",
     min_value=0.0,
     value=6.0,
     help="Berapa banyak pupuk organik atau kompos yang Anda gunakan untuk mengolah tanah di tempat pembibitan awal?"
@@ -84,15 +97,21 @@ st.caption(
     "dan pengelolaan sisa tanaman yang dapat memengaruhi kesuburan tanah"
 )
 
+st.markdown("**Persiapan Lahan Utama (Ton)**")
+st.caption("Total berat pupuk organikm, kompos, atau kapur dasar yang diatur saat pertama kali membajak sawah utama untuk menyiapkan kondisi tanah pra-tanam.")
+
 lp_mainfield = st.number_input(
-    "Persiapan Lahan Utama (Ton)",
+    label="",
     min_value=0.0,
     value=75.0,
     help="Berapa banyak total pupuk organik atau kompos yang ditabur saat pertama kali membajak sawah utama sebelum ditanami?"
 )
 
+st.markdown("**Pengelolaan Jerami/Sisa Sawah (Bundles)**")
+st.caption("Jumlah ikatan jerami atau sisa rumput kering hasil panen lalu yang dihamparkan kembali atau dibenamkan ke dalam tanah sawah sebagai mulsa alami.")
+
 trash = st.number_input(
-    "Pengelolaan Jerami / Sisa Sawah (Bundles)",
+    label="",
     min_value=0.0,
     value=540.0,
     help="Berapa banyak ikatan jerami atau sisa rumput kering yang Anda hamparkan kembali ke sawah sebagai penutup tanah alami?"
@@ -105,29 +124,41 @@ st.caption(
     "Informasi ini digunakan untuk memperkirakan pengaruh penumpukan terhadap hasil panen"
 )
 
+st.markdown("**Pupuk DAP Hari Ke-20 (Kg)**")
+st.caption("Dosis pupuk Di-ammonium Phosphate (DAP/Unsur fosfor) yang diberikan saat usia padi menginjak 20 hari setelah tanam untuk merangsang pertumbuhan akar.")
+
 dap = st.number_input(
-    "Pupuk DAP Hari Ke-20 (Kg)",
+    label="",
     min_value=0.0,
     value=240.0,
     help="Masukkan jumlah pupuk DAP yang Anda tabur saat usia padi menginjak 20 hari setelah tanam."
 )
 
+st.markdown("**Pupuk Urea Hari Ke-40**")
+st.caption("Dosis pupuk Nitrogen (Urea) yang ditaburkan pada umur tanaman 40 hari guna memacu pertumbuhan hijau daun dan batang 9fase vegetatif")
+
 urea = st.number_input(
-    "Pupuk Urea Hari Ke-40 (Kg)",
+    label="",
     min_value=0.0,
     value=162.78,
     help="Masukkan total pupuk Urea yang diberikan pada fase pertumbuhan daun di hari ke-40."
 )
 
+st.markdown("**Pupuk Mikro Hari Ke-50**")
+st.caption("Dosis pupuk Kalium (Potash/KCL) yang ditaburkan pada umur tanaman 50 hari untuk membantu kesiapan padi dalam proses pengisian bulir.")
+
 potash = st.number_input(
-    "Pupuk Kalium Hari Ke-50 (Kg)",
+    label="",
     min_value=0.0,
     value=62.28,
     help="Masukkan jumlah pupuk Kalium (Potash) yang diberikan saat tanaman padi mulai mempersiapkan pembuahan di hari ke-50."
 )
 
+st.markdown("**Pupuk Mikro Hari Ke-70**")
+st.caption("Dosis suplemen nutrisi tambahan atau zat hara mikro (seperti seng besi, mangan) yang disemprotkan pada umur 70 hari saat tanaman memasuki fase pembentukan buir padi")
+
 micronutrients = st.number_input(
-    "Pupuk Mikro Hari Ke-70 (Kg)",
+    label="",
     min_value=0.0,
     value=90.0,
     help="Masukkan jumlah suplemen nutrisi tambahan atau vitamin padi yang Anda semprotkan pada fase pengisian bulir di hari ke-70."
@@ -140,15 +171,21 @@ st.caption(
     "Untuk melindungi tanaman dari gulma, hama, dan penyakit"
 )
 
+st.markdown("**Herbisida Hari Ke-28**")
+st.caption("Dosis cairan obat pembasmi rumput liar/gulma (khususnya yang berbahan kimia Thiobencarb) yang digunakan untuk membersihkan area sawah pada hari ke-28.")
+
 weed = st.number_input(
-    "Herbisida Hari Ke-28 (Thiobencarb)",
+    label="",
     min_value=0.0,
     value=12.0,
     help="Berapa dosis obat pembasmi gulma (Thiobencarb) yang digunakan untuk membersihkan rumput liar di sekitar padi pada hari ke-28?"
 )
 
+st.markdown("**Peptisida Hari Ke-60**")
+st.caption("Volume  cairan pembasmi serangga (peptisida/insektisida/fungisida) yang disemprotkan pada umur 60 hari untuk membentengi tanaman dari serangan hama penyakit.")
+
 pest = st.number_input(
-    "Pestisida Hari Ke-60 (ml)",
+    label="",
     min_value=0.0,
     value=3600.0,
     help="Masukkan total dosis cairan pembasmi serangga atau hama yang disemprotkan untuk melindungi padi pada hari ke-60."
