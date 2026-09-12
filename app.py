@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import requests
+import joblib
 from pathlib import Path
 
 st.set_page_config(
@@ -15,8 +15,13 @@ if "page" not in st.session_state:
 
 BASE_DIR = Path(__file__).resolve().parent
 
-API_URL = "http://127.0.0.1:8000/predict"
+MODEL_PATH = BASE_DIR / "models" / "random_forest_model.pkl"
+SCALER_PATH = BASE_DIR / "models" / "robust_standard_scaler.pkl"
+COLUMNS_PATH = BASE_DIR / "models" / "feature_columns.pkl"
 
+model = joblib.load(MODEL_PATH)
+scaler = joblib.load(SCALER_PATH)
+columns = joblib.load(COLUMNS_PATH)
 
 st.markdown(
     """
@@ -622,29 +627,27 @@ if predict_button:
     try:
 
         input_data = {
-            "hectares": hectares,
-            "micronutrients_70days": micronutrients,
-            "potassh_50days": potash,
-            "urea_40days": urea,
-            "pest_60day": pest,
-            "lp_mainfield": lp_mainfield,
-            "dap_20days": dap,
-            "trash": trash,
-            "seedrate": seedrate,
-            "lp_nurseryarea": lp_nursery,
-            "weed28d_thiobencarb": weed,
-            "nursery_area_cents": nursery_area
+            "Hectares ": hectares,
+            "Micronutrients_70Days": micronutrients,
+            "Potassh_50Days": potash,
+            "Urea_40Days": urea,
+            "Pest_60Day(in ml)": pest,
+            "LP_Mainfield(in Tonnes)": lp_mainfield,
+            "DAP_20days": dap,
+            "Trash(in bundles)": trash,
+            "Seedrate(in Kg)": seedrate,
+            "LP_nurseryarea(in Tonnes)": lp_nursery,
+            "Weed28D_thiobencarb": weed,
+            "Nursery area (Cents)": nursery_area
         }
 
-        response = requests.post(
-            API_URL,
-            json=input_data,
-            timeout=30
-        )
+        input_df = pd.DataFrame([input_data])
 
-        response.raise_for_status()
+        input_df = input_df[columns]
 
-        prediction = response.json()["prediction_kg"]
+        scaled_input = scaler.transform(input_df)
+
+        prediction = model.predict(scaled_input)[0]
 
         yield_per_hectare = prediction / hectares
 
@@ -934,30 +937,6 @@ if predict_button:
             ">
             """,
             unsafe_allow_html=True
-        )
-
-    except requests.exceptions.ConnectionError:
-
-        st.error(
-            "Prediction failed: FastAPI server is not running. "
-            "Please start the API at http://127.0.0.1:8000."
-        )
-
-    except requests.exceptions.Timeout:
-
-        st.error(
-            "Prediction failed: The API request timed out."
-        )
-
-    except requests.exceptions.HTTPError as e:
-
-        try:
-            detail = response.json().get("detail", str(e))
-        except Exception:
-            detail = str(e)
-
-        st.error(
-            f"Prediction failed: {detail}"
         )
 
     except Exception as e:
