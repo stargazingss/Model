@@ -1,52 +1,18 @@
 # Paddy Yield Prediction
 
-A Machine Learning Engineering project for predicting rice yield from agricultural, environmental, and cultivation-related factors. The project covers model development, experiment tracking, API-based inference, and containerized deployment.
+Machine Learning project for predicting paddy yield based on agricultural and environmental factors.
 
-## Overview
+## Live Demo
 
-Rice yield prediction can help estimate expected production based on cultivation and environmental conditions. This project develops and evaluates several regression models to identify the best-performing approach for rice yield prediction.
-
-The project compares:
-
-- Linear Regression
-- K-Nearest Neighbors (KNN)
-- Random Forest
-
-The best-performing model is an optimized Random Forest Regressor, which is served through a FastAPI inference API and can be accessed through the Streamlit application.
-
-## Machine Learning Pipeline
-
-The modeling workflow consists of:
-
-1. Data preprocessing
-2. Duplicate removal
-3. Feature selection
-4. One-hot encoding
-5. Robust scaling
-6. Train-test splitting
-7. Hyperparameter tuning
-8. 5-fold cross-validation
-9. Model evaluation
-10. Experiment tracking with MLflow
-11. Model serving with FastAPI
-12. Containerization with Docker
+[Streamlit App](https://stargazingss-model-app-tzj2im.streamlit.app/)
 
 ## Dataset
 
-The project uses the Paddy Crop Dataset from the UCI Machine Learning Repository.
+The project uses the **UCI Paddy Crop Dataset**, containing agricultural and environmental data related to paddy production.
 
-After preprocessing:
+### Selected Features
 
-- Samples: 2,338
-- Original features: 45
-- Missing values: 0
-- Duplicate records: Removed
-
-## Feature Selection
-
-Feature importance was analyzed using a Random Forest model to identify the most relevant variables for yield prediction.
-
-The final model uses the following features:
+The modeling workflow uses selected agricultural and environmental features, including:
 
 - Hectares
 - Variety
@@ -57,128 +23,91 @@ The final model uses the following features:
 - 30DRain (mm)
 - Relative Humidity_D1_D30
 
-## Models and Hyperparameter Tuning
+## Models
 
-Three regression algorithms were evaluated:
+Three regression models were implemented and evaluated:
 
-- Linear Regression
-- K-Nearest Neighbors (KNN)
 - Random Forest
+- K-Nearest Neighbors (KNN)
+- Linear Regression
 
-### K-Nearest Neighbors
+### Hyperparameter Tuning
 
-The following hyperparameters were evaluated:
+**KNN**
 
 - `n_neighbors`: 3, 5, 7
 - `weights`: uniform, distance
+- Best configuration: `n_neighbors=7`, `weights=uniform`
 
-Best configuration:
-
-```text
-n_neighbors = 7
-weights = uniform
-```
-
-### Random Forest
-
-The following hyperparameters were evaluated:
+**Random Forest**
 
 - `n_estimators`: 50, 100, 150
 - `max_depth`: None, 10, 20
-
-Best configuration:
-
-```text
-n_estimators = 150
-max_depth = None
-```
+- Best configuration: `n_estimators=150`, `max_depth=None`
 
 ## Model Performance
 
-| Model | MAE (kg) | RMSE (kg) | P90 Error (kg) | R² |
-|---|---:|---:|---:|---:|
-| Optimized Random Forest | **657.62** | **912.78** | **1426.74** | **0.9903** |
-| Optimized KNN | 682.38 | 937.67 | 1458.57 | 0.9897 |
-| Linear Regression | 762.88 | 1021.45 | 1584.16 | 0.9878 |
+| Model | MAE (kg) | RMSE (kg) | R² |
+|---|---:|---:|---:|
+| Random Forest | 657.62 | 912.78 | 0.9903 |
+| KNN | 682.38 | 937.67 | 0.9897 |
+| Linear Regression | 762.88 | 1021.45 | 0.9878 |
 
 The optimized Random Forest achieved the best overall performance with:
 
-- MAE: **657.62 kg**
-- RMSE: **912.78 kg**
-- R²: **0.9903**
+- **MAE:** 657.62 kg
+- **RMSE:** 912.78 kg
+- **R²:** 0.9903
 
-## Generalization Check
+R² is a regression evaluation metric and should not be interpreted as prediction accuracy.
 
-The difference between training and testing R² was analyzed to assess model generalization.
+## Generalization Performance
 
-| Model | Train R² | Test R² | Gap |
-|---|---:|---:|---:|
-| Random Forest | 0.9922 | 0.9903 | 0.0019 |
-| KNN | 0.9916 | 0.9897 | 0.0019 |
-| Linear Regression | 0.9893 | 0.9878 | 0.0015 |
+| Model | Test R² | Train-Test R² Gap |
+|---|---:|---:|
+| Random Forest | 0.9903 | 0.0019 |
+| KNN | 0.9897 | 0.0025 |
+| Linear Regression | 0.9878 | 0.0018 |
 
-All models produced a train-test R² gap below 0.01 on this evaluation, suggesting no substantial performance gap between the training and test sets.
+The small train-test R² gaps indicate that the models maintain consistent performance between training and test data.
 
-## Experiment Tracking with MLflow
+## MLflow
 
-MLflow is used to track and compare machine learning experiments.
-
-The tracked information includes:
+MLflow is used to track machine learning experiments, including:
 
 - Model parameters
-- Hyperparameters
 - MAE
 - RMSE
 - R²
 - Model artifacts
 
-This provides a systematic way to compare different model configurations and identify the best-performing model.
+This allows different experiments and model configurations to be compared systematically.
 
 ## FastAPI
 
-The trained Random Forest model is served through a FastAPI application for inference.
+A FastAPI inference service was implemented to expose the trained model through an API.
 
-### Available Endpoints
+### Endpoints
 
-#### Health Check
+**Health Check**
 
-```http
+```text
 GET /health
 ```
 
-Used to verify that the API is running correctly.
+**Prediction**
 
-#### Prediction
-
-```http
+```text
 POST /predict
 ```
 
-Accepts agricultural input features and returns the predicted rice yield.
-
-Example response:
-
-```json
-{
-  "prediction_kg": 23982.55
-}
-```
-
-The API also provides interactive documentation through Swagger UI.
+The `/predict` endpoint accepts agricultural input features and returns the predicted paddy yield in kilograms.
 
 ## Docker
 
-The FastAPI inference service is containerized using Docker.
+The FastAPI service is containerized using Docker to provide a consistent runtime environment.
 
-The Docker container packages:
-
-- Python runtime
-- Required dependencies
-- Trained model
-- Preprocessing artifacts
-- FastAPI application
-
-Build the Docker image:
+Build the image:
 
 ```bash
 docker build -t paddy-yield-api .
@@ -190,99 +119,80 @@ Run the container:
 docker run -p 8000:8000 paddy-yield-api
 ```
 
-The API will be available at:
-
-```text
-http://localhost:8000
-```
-
-Swagger UI:
+The API can then be accessed through:
 
 ```text
 http://localhost:8000/docs
 ```
 
-## Streamlit Application
+## Streamlit
 
-The project includes a Streamlit interface for interactive prediction.
+A Streamlit application provides an interactive interface for paddy yield prediction.
 
-The application allows users to:
+The deployed Streamlit application loads the trained model and preprocessing artifacts directly for prediction.
 
-- Enter agricultural parameters
-- Generate rice yield predictions
-- View predicted productivity
-- Interpret prediction results
-- View recommendations based on prediction results
+### Deployment
 
-Run the Streamlit application:
+The application is deployed using Streamlit Community Cloud.
 
-```bash
-streamlit run app.py
-```
+**Live Demo:** [Paddy Yield Prediction](https://stargazingss-model-app-tzj2im.streamlit.app/)
 
-## System Architecture
+## Architecture
 
 ```text
-                    Paddy Dataset
-                         |
-                         v
-                 Data Preprocessing
-                         |
-                         v
-                  Feature Selection
-                         |
-                         v
-              Model Training & Tuning
-                         |
-                         v
-                      MLflow
-                 Experiment Tracking
-                         |
-                         v
-              Optimized Random Forest
-                         |
-                         v
-                     FastAPI
-                  /predict /health
-                         |
-                         v
-                       Docker
-                         |
-                         v
-                Inference Application
+Paddy Dataset
+      |
+      v
+Data Preprocessing
+      |
+      v
+Feature Selection
+      |
+      v
+Model Training & Tuning
+      |
+      v
+MLflow Experiment Tracking
+      |
+      v
+Optimized Random Forest
+      |
+      +----------------------+
+      |                      |
+      v                      v
+Streamlit Application    FastAPI API
+      |                      |
+      v                      v
+Streamlit Cloud           Docker
+      |                      |
+      v                      v
+  Live Demo             API Inference
 ```
 
 ## Project Structure
 
 ```text
 Model/
-│
 ├── api/
 │   └── main.py
-│
 ├── data/
 │   └── paddydataset.csv
-│
 ├── models/
-│   ├── best_random_forest_model.pkl
+│   ├── random_forest_model.pkl
+│   ├── knn_model.pkl
+│   ├── linear_regression_model.pkl
 │   ├── robust_standard_scaler.pkl
 │   └── feature_columns.pkl
-│
 ├── src/
 │   ├── preprocessing.py
 │   ├── train.py
 │   └── evaluate.py
-│
 ├── app.py
-├── train_model.py
-├── main.ipynb
-│
 ├── Dockerfile
 ├── .dockerignore
 ├── requirements.txt
 ├── requirements-api.txt
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
 ## Installation
@@ -321,6 +231,8 @@ pip install -r requirements.txt
 
 ### Streamlit
 
+Run the interactive prediction application:
+
 ```bash
 streamlit run app.py
 ```
@@ -347,7 +259,7 @@ http://localhost:8000/docs
 
 ### Docker
 
-Build the image:
+Build the Docker image:
 
 ```bash
 docker build -t paddy-yield-api .
@@ -383,8 +295,9 @@ http://localhost:8000/docs
 ## Limitations
 
 - The model is trained and evaluated on the available Paddy Crop Dataset.
-- Model performance may vary on data from different geographical regions, cultivation practices, or environmental conditions.
+- Model performance may vary when applied to data from different geographical regions, cultivation practices, or environmental conditions.
 - The current system focuses on prediction and inference rather than continuous model monitoring or automated retraining.
+- The Streamlit deployment is intended as an interactive prediction demo and does not represent a production-scale ML serving infrastructure.
 
 ## Future Improvements
 
@@ -392,10 +305,10 @@ Potential improvements include:
 
 - Automated model retraining
 - Model version management
-- Cloud deployment
 - Model monitoring
 - CI/CD integration
 - Additional agricultural and environmental data
+- Production cloud deployment for the FastAPI inference service
 
 ## License
 
