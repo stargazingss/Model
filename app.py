@@ -1,262 +1,977 @@
 import streamlit as st
 import pandas as pd
-import joblib
-
-from PIL import Image
-
-@st.cache_resource
-def load_model():
-    model = joblib.load("best_random_forest_model.pkl")
-    scaler = joblib.load("robust_standard_scaler.pkl")
-    columns = joblib.load("feature_columns.pkl")
-
-    return model, scaler, columns, 
-
-model, scaler, columns = load_model()
+import requests
+from pathlib import Path
 
 st.set_page_config(
     page_title="Paddy Yield Prediction",
     page_icon="🌾",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-img = Image.open("logo_padi.jpg")
+if "page" not in st.session_state:
+    st.session_state.page = "welcome"
 
-# Ambil bagian tengah gambar
-width, height = img.size
-img = img.crop((((0, 150, 735, 400))))
+BASE_DIR = Path(__file__).resolve().parent
 
-st.image(img, use_container_width=True)
+API_URL = "http://127.0.0.1:8000/predict"
 
-st.title("🌾 Paddy Yield Prediction System")
-st.write(
+
+st.markdown(
     """
-    Sistem ini digunakan untuk memperkirakan hasil panen padi berdasarkan
-    kondisi lahan, penggunaan benih, pemupukan, serta perlindungan tanaman.
-    """
+    <style>
+
+    .stApp {
+        background-color: #F8F5EA;
+    }
+
+    .block-container {
+        max-width: 1120px !important;
+        padding-top: 60px !important;
+        padding-bottom: 50px !important;
+        padding-left: 32px !important;
+        padding-right: 32px !important;
+    }
+
+    .hero-title {
+        color: #596A32 !important;
+        font-size: 44px !important;
+        font-weight: 800 !important;
+        line-height: 1.1 !important;
+        letter-spacing: -1px !important;
+        margin-top: 0 !important;
+        margin-bottom: 8px !important;
+    }
+
+    .hero-label {
+        color: #8A741F !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1.7px !important;
+        margin-bottom: 7px !important;
+    }
+
+    .hero-description {
+        color: #777264 !important;
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        max-width: 760px !important;
+        margin-top: 0 !important;
+    }
+
+    .model-badge {
+        background-color: #FFFDF7 !important;
+        border: 1px solid #D8CC91 !important;
+        border-radius: 999px !important;
+        color: #596A32 !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        padding: 8px 14px !important;
+        white-space: nowrap !important;
+        text-align: center !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #C9B84A !important;
+        border-radius: 17px !important;
+        box-shadow: 0 4px 14px rgba(70, 65, 40, 0.05) !important;
+        padding: 22px !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {
+        background-color: #FFFFFF !important;
+        border-radius: 17px !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] h2,
+    div[data-testid="stVerticalBlockBorderWrapper"] h3,
+    h2,
+    h3 {
+        color: #596A32 !important;
+        font-weight: 800 !important;
+        margin-top: 0 !important;
+    }
+
+    h2 a,
+    h3 a,
+    h2 a svg,
+    h3 a svg {
+        display: none !important;
+    }
+
+    .stCaption {
+        color: #888477 !important;
+        font-size: 12px !important;
+    }
+
+    label {
+        color: #414638 !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+    }
+
+    div[data-baseweb="input"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D8D3C4 !important;
+        border-radius: 10px !important;
+    }
+
+    div[data-baseweb="input"] input {
+        background-color: #FFFFFF !important;
+        color: #333333 !important;
+        font-size: 14px !important;
+    }
+
+    div[data-baseweb="input"]:focus-within {
+        border: 1.5px solid #C9B84A !important;
+        box-shadow: 0 0 0 2px rgba(201, 184, 74, 0.10) !important;
+    }
+
+    div[data-testid="stForm"] {
+        background-color: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    div[data-testid="stFormSubmitButton"] button {
+        background-color: #596A32 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 10px !important;
+        min-height: 48px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+    }
+
+    div[data-testid="stFormSubmitButton"] button:hover {
+        background-color: #4E5D2C !important;
+    }
+
+    .welcome-button button {
+        background-color: #596A32 !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 10px !important;
+        min-height: 50px !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .welcome-button button:hover {
+        background-color: #4E5D2C !important;
+        color: #FFFFFF !important;
+    }
+
+    div[data-testid="stMetric"] {
+        background-color: #FFFFFF !important;
+        border: 1.5px solid #D8CC91 !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        min-height: 145px !important;
+        box-shadow: 0 4px 14px rgba(70, 65, 40, 0.05) !important;
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #777264 !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #596A32 !important;
+        font-size: 30px !important;
+        font-weight: 800 !important;
+    }
+
+    div[data-testid="stAlert"] {
+        border-radius: 12px !important;
+    }
+
+    .welcome-page {
+        min-height: 62vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    .welcome-label {
+        color: #8A741F;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.8px;
+        margin-bottom: 16px;
+    }
+
+    .welcome-title {
+        color: #596A32;
+        font-size: 52px;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -1.5px;
+        margin: 0 0 18px 0;
+    }
+
+    .welcome-description {
+        color: #777264;
+        font-size: 16px;
+        line-height: 1.7;
+        max-width: 650px;
+        margin: 0;
+    }
+
+    .welcome-button {
+        margin-top: 12px;
+    }
+
+    .footer-text {
+        text-align: center !important;
+        color: #999488 !important;
+        font-size: 11px !important;
+        width: 100% !important;
+        margin-top: 32px !important;
+    }
+
+    @media (max-width: 768px) {
+
+        .block-container {
+            padding-left: 18px !important;
+            padding-right: 18px !important;
+            padding-top: 42px !important;
+        }
+
+        .hero-title {
+            font-size: 34px !important;
+        }
+
+        .hero-description {
+            font-size: 14px !important;
+        }
+
+        .welcome-title {
+            font-size: 38px !important;
+        }
+
+        .welcome-description {
+            font-size: 14px !important;
+        }
+
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-st.header("🧱Luas Lahan Utama (Hectares)")
 
-st.caption(
-    "Masukkan total luas lahan sawah aktif yang digunakan "
-    "untuk budidaya padi pada musim tanam saat ini."
-)
+if st.session_state.page == "welcome":
 
-st.markdown("**Luas Lahan (ha)**")
-st.caption("Luas total area sawah aktif yang Anda tanami padi saat ini.")
+    st.markdown(
+        '<div class="welcome-page">'
+        '<div class="welcome-label">RICE YIELD ESTIMATION</div>'
+        '<div class="welcome-title">Paddy Yield Prediction</div>'
+        '<div class="welcome-description">'
+        'Estimate your expected paddy yield using field conditions, '
+        'seed usage, fertilization, nursery preparation, and crop protection data.'
+        '</div>'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-hectares = st.number_input(
-    label="",
-    min_value=0.0,
-    value=2.5,
-    label_visibility="collapsed"
-)
+    col1, col2, col3 = st.columns([1.2, 1, 1.2])
 
-st.markdown("**Jumlah Benih Padi(kg)**")
-st.caption("Berat total benih yang disemai untuk kebutuhan musim tanah ini.")
+    with col2:
 
-seedrate = st.number_input(
-    label="",
-    min_value=0.0,
-    value=150.0,
-    help="Berapa total bobot benih padi yang Anda sebar atau semai untuk musim tanam ini?"
-)
-
-st.header("🌱Area Pembibitan Awal (Nursery)")
-
-st.caption(
-    "Masukkan informasi mengenai area pembibitan dan persiapan tanah yang digunakan. "
-    "Untuk menumbuhkan bibit padi sebelum dipindahkan ke lahan utama"
-)
-
-st.markdown("**Luas Area Pembibitan(Cents)**")
-st.caption("Luas petak tanah khusus yang Anda gunakan untuk menyemai benih awal sebelum nantinya dipindahkan ke sawah utama.")
-
-nursery_area = st.number_input(
-    label="",
-    min_value=0.0,
-    value=120.0,
-    help="Masukkan luas petak khusus yang Anda gunakan untuk menyemai bibit awal sebelum dipindah ke sawah utama."
-)
-
-st.markdown("**Persiapan Tanah Pembibitan (Ton)**")
-st.caption("Banyaknya pupuk organik atau kompos yang diberikan untuk mengelolah dan menggemburkan tanah khusus di area pembibitan awal.")
-
-lp_nursery = st.number_input(
-    label="",
-    min_value=0.0,
-    value=6.0,
-    help="Berapa banyak pupuk organik atau kompos yang Anda gunakan untuk mengolah tanah di tempat pembibitan awal?"
-)
-
-st.header("🚜Pengolahan Lahan Utama")
-
-st.caption(
-    "Masukkan data terkait lahan sawah utama, termasuk penggunaan bahan organik, "
-    "dan pengelolaan sisa tanaman yang dapat memengaruhi kesuburan tanah"
-)
-
-st.markdown("**Persiapan Lahan Utama (Ton)**")
-st.caption("Total berat pupuk organikm, kompos, atau kapur dasar yang diatur saat pertama kali membajak sawah utama untuk menyiapkan kondisi tanah pra-tanam.")
-
-lp_mainfield = st.number_input(
-    label="",
-    min_value=0.0,
-    value=75.0,
-    help="Berapa banyak total pupuk organik atau kompos yang ditabur saat pertama kali membajak sawah utama sebelum ditanami?"
-)
-
-st.markdown("**Pengelolaan Jerami/Sisa Sawah (Bundles)**")
-st.caption("Jumlah ikatan jerami atau sisa rumput kering hasil panen lalu yang dihamparkan kembali atau dibenamkan ke dalam tanah sawah sebagai mulsa alami.")
-
-trash = st.number_input(
-    label="",
-    min_value=0.0,
-    value=540.0,
-    help="Berapa banyak ikatan jerami atau sisa rumput kering yang Anda hamparkan kembali ke sawah sebagai penutup tanah alami?"
-)
-
-st.header("🧪Pemupukan & Nutrisi Tanaman")
-
-st.caption(
-    "Masukkan jumlah pupuk dan nutrisi yang diberikan pada berbagai fase pertumbuhan padi. "
-    "Informasi ini digunakan untuk memperkirakan pengaruh penumpukan terhadap hasil panen"
-)
-
-st.markdown("**Pupuk DAP Hari Ke-20 (Kg)**")
-st.caption("Dosis pupuk Di-ammonium Phosphate (DAP/Unsur fosfor) yang diberikan saat usia padi menginjak 20 hari setelah tanam untuk merangsang pertumbuhan akar.")
-
-dap = st.number_input(
-    label="",
-    min_value=0.0,
-    value=240.0,
-    help="Masukkan jumlah pupuk DAP yang Anda tabur saat usia padi menginjak 20 hari setelah tanam."
-)
-
-st.markdown("**Pupuk Urea Hari Ke-40**")
-st.caption("Dosis pupuk Nitrogen (Urea) yang ditaburkan pada umur tanaman 40 hari guna memacu pertumbuhan hijau daun dan batang 9fase vegetatif")
-
-urea = st.number_input(
-    label="",
-    min_value=0.0,
-    value=162.78,
-    help="Masukkan total pupuk Urea yang diberikan pada fase pertumbuhan daun di hari ke-40."
-)
-
-st.markdown("**Pupuk Mikro Hari Ke-50**")
-st.caption("Dosis pupuk Kalium (Potash/KCL) yang ditaburkan pada umur tanaman 50 hari untuk membantu kesiapan padi dalam proses pengisian bulir.")
-
-potash = st.number_input(
-    label="",
-    min_value=0.0,
-    value=62.28,
-    help="Masukkan jumlah pupuk Kalium (Potash) yang diberikan saat tanaman padi mulai mempersiapkan pembuahan di hari ke-50."
-)
-
-st.markdown("**Pupuk Mikro Hari Ke-70**")
-st.caption("Dosis suplemen nutrisi tambahan atau zat hara mikro (seperti seng besi, mangan) yang disemprotkan pada umur 70 hari saat tanaman memasuki fase pembentukan buir padi")
-
-micronutrients = st.number_input(
-    label="",
-    min_value=0.0,
-    value=90.0,
-    help="Masukkan jumlah suplemen nutrisi tambahan atau vitamin padi yang Anda semprotkan pada fase pengisian bulir di hari ke-70."
-)
-
-st.header("🐛Perlindungan Tanaman")
-
-st.caption(
-    "Masukkan data penggunaan herbisida dan pestisida yang diterapkan selama masa tanam. "
-    "Untuk melindungi tanaman dari gulma, hama, dan penyakit"
-)
-
-st.markdown("**Herbisida Hari Ke-28**")
-st.caption("Dosis cairan obat pembasmi rumput liar/gulma (khususnya yang berbahan kimia Thiobencarb) yang digunakan untuk membersihkan area sawah pada hari ke-28.")
-
-weed = st.number_input(
-    label="",
-    min_value=0.0,
-    value=12.0,
-    help="Berapa dosis obat pembasmi gulma (Thiobencarb) yang digunakan untuk membersihkan rumput liar di sekitar padi pada hari ke-28?"
-)
-
-st.markdown("**Peptisida Hari Ke-60**")
-st.caption("Volume  cairan pembasmi serangga (peptisida/insektisida/fungisida) yang disemprotkan pada umur 60 hari untuk membentengi tanaman dari serangan hama penyakit.")
-
-pest = st.number_input(
-    label="",
-    min_value=0.0,
-    value=3600.0,
-    help="Masukkan total dosis cairan pembasmi serangga atau hama yang disemprotkan untuk melindungi padi pada hari ke-60."
-)
-
-if st.button("🌾 Prediksi Hasil Panen"):
-
-    st.markdown("""
-    Aplikasi ini digunakan untuk memperkirakan hasil panen padi berdasarkan kondisi lahan,
-    penggunaan benih, pemupukan, serta perlindungan tanaman selama masa budidaya.
-
-    Silakan isi seluruh data sesuai kondisi aktual di lapangan untuk mendapatkan hasil prediksi yang lebih akurat.
-    """)
-
-    input_df = pd.DataFrame({
-        'Hectares ': [hectares],
-        'Micronutrients_70Days': [micronutrients],
-        'Potassh_50Days': [potash],
-        'Urea_40Days': [urea],
-        'Pest_60Day(in ml)': [pest],
-        'LP_Mainfield(in Tonnes)': [lp_mainfield],
-        'DAP_20days': [dap],
-        'Trash(in bundles)': [trash],
-        'Seedrate(in Kg)': [seedrate],
-        'LP_nurseryarea(in Tonnes)': [lp_nursery],
-        'Weed28D_thiobencarb': [weed],
-        'Nursery area (Cents)': [nursery_area]
-    })
-
-    try:
-        input_df = input_df.reindex(columns=columns, fill_value=0)
-
-        input_scaled = scaler.transform(input_df)
-
-        prediction = model.predict(input_scaled)[0]
-
-        st.success(
-            f"Perkiraan Hasil Panen Padi: {prediction:,.2f} Kg"
+        st.markdown(
+            '<div class="welcome-button">',
+            unsafe_allow_html=True
         )
 
-        st.subheader("Interpretasi Prediksi")
+        if st.button(
+            "Start Yield Prediction →",
+            width="stretch"
+        ):
+            st.session_state.page = "input"
+            st.rerun()
 
-        explanation = []
+        st.markdown(
+            '</div>',
+            unsafe_allow_html=True
+        )
 
-        if hectares > 2:
-            explanation.append("Luas lahan yang lebih besar berkontribusi terhadap peningkatan hasil panen.")
+    st.markdown(
+        """
+        <p class="footer-text">
+            Paddy Yield Prediction System
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
 
-        if urea > 150:
-            explanation.append("Pemberian pupuk Urea yang cukup mendukung pertumbuhan vegetatif tanaman.")
+    st.stop()
 
-        if potash > 50:
-            explanation.append("Pupuk Kalium membantu proses pembentukan dan pengisian bulir padi.")
+
+header_left, header_right = st.columns(
+    [4.5, 1.5],
+    vertical_alignment="top"
+)
+
+with header_left:
+
+    st.caption("RICE YIELD ESTIMATION")
+
+    st.markdown(
+        '<p class="hero-title">Paddy Yield Prediction</p>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        """
+        <p class="hero-description">
+        Estimate expected rice yield in kilograms based on field size,
+        seed usage, fertilization, nursery preparation, and crop protection inputs.
+        </p>
+        """,
+        unsafe_allow_html=True
+    )
+
+with header_right:
+
+    st.write("")
+
+    st.markdown(
+        '<p class="model-badge">Optimized Random Forest Model</p>',
+        unsafe_allow_html=True
+    )
+
+
+st.markdown(
+    """
+    <hr style="
+        border: none;
+        border-top: 1px solid #D5D1C6;
+        margin: 28px 0 24px 0;
+    ">
+    """,
+    unsafe_allow_html=True
+)
+
+
+with st.form("prediction_form"):
+
+    with st.container(border=True):
+
+        st.subheader("Field Conditions")
+
+        st.caption(
+            "Basic information about the rice-growing area."
+        )
+
+        col1, col2 = st.columns(2, gap="large")
+
+        with col1:
+
+            hectares = st.number_input(
+                "Hectares",
+                min_value=0.01,
+                value=2.5,
+                step=0.1
+            )
+
+            st.caption(
+                "Total active rice-growing area currently planted with rice."
+            )
+
+        with col2:
+
+            seedrate = st.number_input(
+                "Seed Rate (kg)",
+                min_value=0.0,
+                value=150.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Total amount of rice seed used for the planting area."
+            )
+
+    st.markdown(
+        """
+        <hr style="
+            border: none;
+            border-top: 1px solid #D5D1C6;
+            margin: 26px 0;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.container(border=True):
+
+        st.subheader("Nursery")
+
+        st.caption(
+            "Information related to nursery area and preparation."
+        )
+
+        col1, col2 = st.columns(2, gap="large")
+
+        with col1:
+
+            nursery_area = st.number_input(
+                "Nursery Area (Cents)",
+                min_value=0.0,
+                value=120.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Area allocated for preparing rice seedlings before transplantation."
+            )
+
+        with col2:
+
+            lp_nursery = st.number_input(
+                "LP Nursery Area (Tonnes)",
+                min_value=0.0,
+                value=6.0,
+                step=0.1
+            )
+
+            st.caption(
+                "Land preparation input used for the nursery area."
+            )
+
+    st.markdown(
+        """
+        <hr style="
+            border: none;
+            border-top: 1px solid #D5D1C6;
+            margin: 26px 0;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.container(border=True):
+
+        st.subheader("Field Preparation")
+
+        st.caption(
+            "Inputs used during preparation of the main rice field."
+        )
+
+        col1, col2 = st.columns(2, gap="large")
+
+        with col1:
+
+            lp_mainfield = st.number_input(
+                "LP Main Field (Tonnes)",
+                min_value=0.0,
+                value=75.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Land preparation input applied to the main rice-growing field."
+            )
+
+        with col2:
+
+            trash = st.number_input(
+                "Trash (Bundles)",
+                min_value=0.0,
+                value=540.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Amount of agricultural residue or plant material present in the field."
+            )
+
+    st.markdown(
+        """
+        <hr style="
+            border: none;
+            border-top: 1px solid #D5D1C6;
+            margin: 26px 0;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.container(border=True):
+
+        st.subheader("Fertilization")
+
+        st.caption(
+            "Fertilizer inputs applied during rice cultivation."
+        )
+
+        col1, col2 = st.columns(2, gap="large")
+
+        with col1:
+
+            dap = st.number_input(
+                "DAP (kg)",
+                min_value=0.0,
+                value=240.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Amount of DAP fertilizer applied to the rice field."
+            )
+
+            urea = st.number_input(
+                "Urea (kg)",
+                min_value=0.0,
+                value=162.78,
+                step=1.0
+            )
+
+            st.caption(
+                "Amount of urea fertilizer applied during cultivation."
+            )
+
+        with col2:
+
+            potash = st.number_input(
+                "Potash (kg)",
+                min_value=0.0,
+                value=62.28,
+                step=1.0
+            )
+
+            st.caption(
+                "Amount of potash fertilizer applied to the rice field."
+            )
+
+            micronutrients = st.number_input(
+                "Micronutrients (kg)",
+                min_value=0.0,
+                value=90.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Amount of micronutrient fertilizer applied during cultivation."
+            )
+
+    st.markdown(
+        """
+        <hr style="
+            border: none;
+            border-top: 1px solid #D5D1C6;
+            margin: 26px 0;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+    with st.container(border=True):
+
+        st.subheader("Crop Protection")
+
+        st.caption(
+            "Inputs related to weed and pest management."
+        )
+
+        col1, col2 = st.columns(2, gap="large")
+
+        with col1:
+
+            weed = st.number_input(
+                "Weed Control",
+                min_value=0.0,
+                value=12.0,
+                step=1.0
+            )
+
+            st.caption(
+                "Amount of weed-control treatment used during rice cultivation."
+            )
+
+        with col2:
+
+            pest = st.number_input(
+                "Pest Control (ml)",
+                min_value=0.0,
+                value=3600.0,
+                step=100.0
+            )
+
+            st.caption(
+                "Amount of pest-control treatment used during cultivation."
+            )
+
+    st.write("")
+
+    predict_button = st.form_submit_button(
+        "Predict Paddy Yield",
+        width="stretch"
+    )
+
+
+if predict_button:
+
+    try:
+
+        input_data = {
+            "hectares": hectares,
+            "micronutrients_70days": micronutrients,
+            "potassh_50days": potash,
+            "urea_40days": urea,
+            "pest_60day": pest,
+            "lp_mainfield": lp_mainfield,
+            "dap_20days": dap,
+            "trash": trash,
+            "seedrate": seedrate,
+            "lp_nurseryarea": lp_nursery,
+            "weed28d_thiobencarb": weed,
+            "nursery_area_cents": nursery_area
+        }
+
+        response = requests.post(
+            API_URL,
+            json=input_data,
+            timeout=30
+        )
+
+        response.raise_for_status()
+
+        prediction = response.json()["prediction_kg"]
+
+        yield_per_hectare = prediction / hectares
+
+        st.markdown(
+            """
+            <hr style="
+                border: none;
+                border-top: 1px solid #D5D1C6;
+                margin: 28px 0 24px 0;
+            ">
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.subheader("Prediction Result")
+
+        st.caption(
+            "Estimated production based on the provided cultivation inputs."
+        )
+
+        result_col1, result_col2 = st.columns(
+            2,
+            gap="large"
+        )
+
+        with result_col1:
+
+            st.metric(
+                "Estimated Total Yield",
+                f"{prediction:,.2f} kg"
+            )
+
+        with result_col2:
+
+            st.metric(
+                "Yield per Hectare",
+                f"{yield_per_hectare:,.2f} kg/ha"
+            )
+
+        if yield_per_hectare < 4000:
+
+            productivity_status = "Low"
+
+        elif yield_per_hectare <= 6000:
+
+            productivity_status = "Moderate"
+
+        else:
+
+            productivity_status = "High"
+
+        st.write("")
+
+        st.info(
+            f"Productivity Status: {productivity_status}"
+        )
+
+        st.markdown(
+            """
+            <hr style="
+                border: none;
+                border-top: 1px solid #D5D1C6;
+                margin: 28px 0 24px 0;
+            ">
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.subheader("Input Recommendations")
+
+        recommendations = []
+
+        seed_per_hectare = seedrate / hectares
+
+        if seed_per_hectare < 20:
+
+            recommendations.append(
+                (
+                    "Seed Rate",
+                    "Seed usage per hectare is relatively low. "
+                    "Review the planting density based on the cultivation area.",
+                    "warning"
+                )
+            )
+
+        elif seed_per_hectare > 60:
+
+            recommendations.append(
+                (
+                    "Seed Rate",
+                    "Seed usage per hectare is relatively high. "
+                    "Consider reviewing the seed rate used for the field.",
+                    "warning"
+                )
+            )
+
+        else:
+
+            recommendations.append(
+                (
+                    "Seed Rate",
+                    "Seed usage per hectare is within the current reference range.",
+                    "success"
+                )
+            )
+
+        lp_per_hectare = lp_mainfield / hectares
+
+        if lp_per_hectare < 20:
+
+            recommendations.append(
+                (
+                    "Field Preparation",
+                    "Main-field preparation input per hectare is relatively low. "
+                    "Review whether the field preparation is sufficient.",
+                    "warning"
+                )
+            )
+
+        else:
+
+            recommendations.append(
+                (
+                    "Field Preparation",
+                    "Main-field preparation input is within the current reference range.",
+                    "success"
+                )
+            )
+
+        fertilizer_messages = []
+
+        if urea < 150:
+
+            fertilizer_messages.append(
+                "Urea input is relatively low."
+            )
+
+        if potash < 50:
+
+            fertilizer_messages.append(
+                "Potash input is relatively low."
+            )
+
+        if dap < 200:
+
+            fertilizer_messages.append(
+                "DAP input is relatively low."
+            )
 
         if micronutrients > 70:
-            explanation.append("Nutrisi mikro mendukung perkembangan tanaman pada fase generatif.")
 
-        if not explanation:
-            explanation.append("Prediksi dihitung berdasarkan kombinasi seluruh faktor budidaya yang dimasukkan.")
+            fertilizer_messages.append(
+                "Micronutrient input is relatively high."
+            )
 
-        for item in explanation:
-            st.write("•", item)
+        if fertilizer_messages:
+
+            recommendations.append(
+                (
+                    "Fertilization",
+                    " ".join(fertilizer_messages)
+                    + " Review fertilizer application according to field requirements.",
+                    "warning"
+                )
+            )
+
+        else:
+
+            recommendations.append(
+                (
+                    "Fertilization",
+                    "Fertilizer inputs are within the current reference ranges.",
+                    "success"
+                )
+            )
+
+        crop_messages = []
+
+        if weed < 10:
+
+            crop_messages.append(
+                "Weed-control input is relatively low."
+            )
+
+        if pest < 2500:
+
+            crop_messages.append(
+                "Pest-control input is relatively low."
+            )
+
+        if crop_messages:
+
+            recommendations.append(
+                (
+                    "Crop Protection",
+                    " ".join(crop_messages)
+                    + " Review crop-protection requirements based on field conditions.",
+                    "info"
+                )
+            )
+
+        else:
+
+            recommendations.append(
+                (
+                    "Crop Protection",
+                    "Crop-protection inputs are within the current reference ranges.",
+                    "success"
+                )
+            )
+
+        for category, message, status in recommendations:
+
+            if status == "warning":
+
+                st.warning(
+                    f"{category}\n\n{message}"
+                )
+
+            elif status == "info":
+
+                st.info(
+                    f"{category}\n\n{message}"
+                )
+
+            else:
+
+                st.success(
+                    f"{category}\n\n{message}"
+                )
+
+        st.markdown(
+            """
+            <hr style="
+                border: none;
+                border-top: 1px solid #D5D1C6;
+                margin: 28px 0 24px 0;
+            ">
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.subheader("Model Performance")
+
+        st.caption(
+            "Performance of the optimized Random Forest model on the test data."
+        )
+
+        performance_col1, performance_col2, performance_col3 = st.columns(
+            3,
+            gap="large"
+        )
+
+        with performance_col1:
+
+            st.metric(
+                "R² Score",
+                "0.9903"
+            )
+
+        with performance_col2:
+
+            st.metric(
+                "MAE",
+                "657.62 kg"
+            )
+
+        with performance_col3:
+
+            st.metric(
+                "RMSE",
+                "912.78 kg"
+            )
+
+        st.caption(
+            "Note: This prediction is generated by a machine learning model "
+            "based on historical agricultural data. The result is an estimation "
+            "and not a guaranteed harvest outcome."
+        )
+
+        st.markdown(
+            """
+            <hr style="
+                border: none;
+                border-top: 1px solid #D5D1C6;
+                margin: 28px 0 24px 0;
+            ">
+            """,
+            unsafe_allow_html=True
+        )
+
+    except requests.exceptions.ConnectionError:
+
+        st.error(
+            "Prediction failed: FastAPI server is not running. "
+            "Please start the API at http://127.0.0.1:8000."
+        )
+
+    except requests.exceptions.Timeout:
+
+        st.error(
+            "Prediction failed: The API request timed out."
+        )
+
+    except requests.exceptions.HTTPError as e:
+
+        try:
+            detail = response.json().get("detail", str(e))
+        except Exception:
+            detail = str(e)
+
+        st.error(
+            f"Prediction failed: {detail}"
+        )
 
     except Exception as e:
-        st.error(f"Terjadi kesalahan saat melakukan prediksi: {e}")
 
-st.markdown("---")
+        st.error(
+            f"Prediction failed: {str(e)}"
+        )
 
-st.info(
+
+st.markdown(
     """
-    Catatan:
-    - Gunakan tanda titik untuk angka desimal (contoh: 62.28).
-    - Jika tidak memiliki data pasti, gunakan estimasi yang mendekati kondisi lapangan.
-    """
+    <p class="footer-text">
+        Paddy Yield Prediction System
+    </p>
+    """,
+    unsafe_allow_html=True
 )
