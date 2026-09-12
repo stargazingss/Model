@@ -12,16 +12,20 @@ The project uses the **UCI Paddy Crop Dataset**, containing agricultural and env
 
 ### Selected Features
 
-The modeling workflow uses selected agricultural and environmental features, including:
+The modeling workflow uses 12 selected agricultural and environmental features:
 
 - Hectares
-- Variety
-- Soil Types
-- Seedrate (Kg)
-- Urea_40Days
+- Micronutrients_70Days
 - Potassh_50Days
-- 30DRain (mm)
-- Relative Humidity_D1_D30
+- Urea_40Days
+- Pest_60Day(in ml)
+- LP_Mainfield(in Tonnes)
+- DAP_20days
+- Trash(in bundles)
+- Seedrate(in Kg)
+- LP_nurseryarea(in Tonnes)
+- Weed28D_thiobencarb
+- Nursery area (Cents)
 
 ## Models
 
