@@ -176,7 +176,7 @@ Streamlit Cloud           Docker
 ## Project Structure
 
 ```text
-Model/
+paddy-yield-ml-engineering/
 ├── api/
 │   └── main.py
 ├── data/
@@ -204,13 +204,13 @@ Model/
 Clone the repository:
 
 ```bash
-git clone https://github.com/stargazingss/Model.git
+git clone https://github.com/stargazingss/paddy-yield-ml-engineering
 ```
 
 Move into the project directory:
 
 ```bash
-cd Model
+cd paddy-yield-ml-engineering
 ```
 
 Create a virtual environment:
